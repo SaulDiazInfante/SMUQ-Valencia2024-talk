@@ -1,49 +1,35 @@
-"""Main function to obtain the figures"""
-import sys
+"""
+    Main function to obtain the figures
+"""
 import os
-import numpy as np
-wd = os.getcwd()
-sys.path.append('wd')
-from vsm_figures import VsmFigures
+from sys import path
 from vsm_animation import VsmAnimator
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-# from matplotlib.animation import FFMpegWr
-import seaborn as sns
-# print(wd)
-os.chdir('..')
-wd = os.getcwd()
-#print(wd)
-fig = plt.figure()
-wd = wd + '/data/'
-vs_fig = VsmFigures(fig, wd)
-vs_fig.load_data()
+from vsm_figures import VsmFigures
 
-ax_states, fig_states = vs_fig.plot_states()
-ax_policy, fig_policy = vs_fig.plot_policies()
-fig, ax1, ax2, ax3, ax4 = vs_fig.dash_plot()
+
+# import numpy as np
+# import seaborn as sns
+import matplotlib.pyplot as plt
+
+path.append('/home/saul/Insync/sauld@cimat.mx/Google Drive/UNISON/Ponencias/2024/SMUQ-Valencia2024-talk/python-code/visualization')
+
+wd = os.getcwd()
+wd = wd + '/data/'
+path.append(wd)
+
+
+# print(wd)
+# os.chdir('..')
+
+fig = plt.figure()
+vs_fig = VsmFigures(fig)
+vs_fig.load_data()
 N = vs_fig.df_ref_par['N'][0]
 x_lim = vs_fig.df_ref_sol.index.max()
 y_lim = N * vs_fig.df_ref_sol['I_S'].max()
-vs_an = VsmAnimator(fig, ax1, ax2, ax3, ax4, x_lim, y_lim, wd)
+ax_states, fig_states = vs_fig.plot_states()
+ax_policy, fig_policy = vs_fig.plot_policies()
+fig, ax1, ax2, ax3, ax4 = vs_fig.dash_plot()
+vs_an = VsmAnimator(fig, ax1, ax2, ax3, ax4, x_lim, y_lim)
 vs_an.load_data()
-
-anim = animation.FuncAnimation(
-    fig,
-    vs_an,
-    init_func=vs_an.start,
-    frames=len(vs_an.df_ref_sol.index),
-    interval=1,
-     repeat=False
-)
-
-# metadata = dict(title='duffing oscillator', artist='SDIV')
-# writer = FFMpegWriter(fps=16, metadata=metadata)
-# anim.save('duffing_animation.mp4', writer=writer)
-
-
-# with writer.saving(fig, "duffing_animation.mp4", 100):
-#     for idx, t in enumerate(df_current_sol['time']):
-#         print(idx, t)
-#         ud.__call__(idx)
-#         writer.grab_frame()
+vs_an.record_animation()
