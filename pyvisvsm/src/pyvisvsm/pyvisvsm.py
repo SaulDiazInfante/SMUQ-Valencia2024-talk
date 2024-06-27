@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from tqdm import tqdm
+
 
 
 class VsmFigures(object):
@@ -36,9 +38,18 @@ class VsmFigures(object):
             #   'K_stock',
             #   'action'
         ]
+        self.policy = [
+            'K_stock',
+            'action',
+            'opt_policy'
+        ]
+
         self.y_k_t_lim = 0.0
         self.y_a_t_lim = 0.0
         self.y_op_t_lim = 0.0
+        self.x_0_date = np.empty(1, dtype=object)
+        self.x_f_date = np.empty(1, dtype=object)
+        self.y_i_s_lim = 0.0
 
     def load_data(self):
         """_summary_
@@ -68,20 +79,18 @@ class VsmFigures(object):
             #   'K_stock',
             #   'action'
         ]
-        self.policy = [
-            'K_stock',
-            'action',
-            'opt_policy'
-        ]
+
         N = self.df_ref_par['N'][0]
         self.df_states = N * self.df_ref_sol[self.states]
         self.df_policy = self.df_ref_sol[self.policy]
         self.df_policy['K_stock'] = N * self.df_policy['K_stock']
         self.df_policy['action'] = N * self.df_policy['action']
+        self.x_0_date = self.df_ref_sol.index.min()
+        self.x_f_date = self.df_ref_sol.index.max()
         self.y_k_t_lim = self.df_policy['K_stock'].max()
-        self.y_a_t_lim = self.df_policy['action'].max()
+        self.y_a_t_lim = 1.2 * self.df_policy['action'].max()
         self.y_op_t_lim = 1.2
-
+        self.y_i_s_lim = 1.1 * N * self.df_ref_sol['I_S'].max()
 
     def plot_states(self):
         """_summary_
@@ -209,8 +218,6 @@ class VsmAnimator(VsmFigures):
         ax2,
         ax3,
         ax4,
-        x_lim,
-        y_lim,
         data_dir="./data/"
     ):
         """_summary_
@@ -221,8 +228,6 @@ class VsmAnimator(VsmFigures):
             ax2 (matplotlib.pyplot.axis): _description_
             ax3 (matplotlib.pyplot.axis): _description_
             ax4 (matplotlib.pyplot.axis): _description_
-            x_lim (np.float): _description_
-            y_lim (np.float): _description_
             data_dir (str, optional): _description_. Defaults to "./python-code/data/".
 
         """
@@ -232,8 +237,6 @@ class VsmAnimator(VsmFigures):
         self.ax2 = ax2
         self.ax3 = ax3
         self.ax4 = ax4
-        self.x_lim = x_lim
-        self.y_lim = y_lim
         self.fig = fig
         self.fig = plt.figure(figsize=(12.11, 7.7))
         ax1 = plt.subplot2grid((3, 9), (0, 0), colspan=3)
@@ -249,6 +252,11 @@ class VsmAnimator(VsmFigures):
         ax1.set_ylabel(r'$K_{stock}(t) \ $ (vaccine-jabs)')
         ax2.set_ylabel(r'$a_t \ $ vaccine-jabs/day')
         ax3.set_ylabel(r'$\pi ^{\star}$ current stock fraction')
+        self.ax1.set_xlim(self.x_0_date, self.x_f_date)
+        self.ax2.set_xlim(self.x_0_date, self.x_f_date)
+        self.ax3.set_xlim(self.x_0_date, self.x_f_date)
+        self.ax4.set_xlim(self.x_0_date, self.x_f_date)
+
         ax3_labels = ax3.get_xticks()
         ax3.set_xticks(ax3_labels)
         ax3.set_xticklabels(
@@ -302,23 +310,23 @@ class VsmAnimator(VsmFigures):
             self.df_policy['K_stock'][0:idx]
         )
         self.ax1.set_ylabel(r'$K_{stock}$')
-        x_0_date = self.df_ref_sol.index.min()
-        x_f_date = self.df_ref_sol.index.max()
-        self.ax1.set_xlim(x_0_date, x_f_date)
+        self.x_0_date = self.df_ref_sol.index.min()
+        self.x_f_date = self.df_ref_sol.index.max()
+        self.ax1.set_xlim(self.x_0_date, self.x_f_date)
         self.ax1.set_ylim(0, self.y_k_t_lim)
 
         self.ax2.clear()
         self.ax2.plot(
             self.df_policy.index[0:idx],
             self.df_policy['action'][0:idx])
-        self.ax2.set_xlim(x_0_date, x_f_date)
+        self.ax2.set_xlim(self.x_0_date, self.x_f_date)
         self.ax2.set_ylim(0, self.y_a_t_lim)
 
         self.ax3.clear()
         self.ax3.plot(
             self.df_policy.index[0:idx],
             self.df_policy['opt_policy'][0:idx])
-        self.ax3.set_xlim(x_0_date, x_f_date)
+        self.ax3.set_xlim(self.x_0_date, self.x_f_date)
         self.ax3.set_ylim(0, self.y_op_t_lim)
         self.ax3.set_ylabel(r'$\pi$ faction of total stock')
 
@@ -327,7 +335,7 @@ class VsmAnimator(VsmFigures):
             self.df_states.index[0:idx],
             self.df_states['I_S'][0:idx]
         )
-        self.ax4.set_ylim(0, self.y_lim)
+        self.ax4.set_ylim(0, self.y_i_s_lim)
 
     def start(self) -> list:
         """_summary_
@@ -350,11 +358,17 @@ class VsmAnimator(VsmFigures):
             repeat=False
         )
         metadata = self.metadata
-        writer = animation.FFMpegWriter(fps=16, metadata=metadata)
+        writer = animation.FFMpegWriter(fps=5, metadata=metadata)
         # anim.save(video_file, writer=writer)
+        pbar = tqdm(
+            desc='rec',
+            total=3123750
+        )
+
 
         with writer.saving(self.fig, video_file, 100):
-            for idx, t in enumerate(self.df_policy['date']):
-                print(idx, t)
+            for idx, t in enumerate(self.df_policy.index):
+                # print(idx, t)
                 self.__call__(idx)
                 writer.grab_frame()
+                pbar.update(idx)
