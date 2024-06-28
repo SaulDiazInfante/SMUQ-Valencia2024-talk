@@ -213,11 +213,6 @@ class VsmAnimator(VsmFigures):
 
     def __init__(
         self,
-        fig,
-        ax1,
-        ax2,
-        ax3,
-        ax4,
         data_dir="./data/"
     ):
         """_summary_
@@ -232,44 +227,40 @@ class VsmAnimator(VsmFigures):
 
         """
 
-        super(VsmAnimator, self).__init__(fig, data_dir)
-        self.ax1 = ax1
-        self.ax2 = ax2
-        self.ax3 = ax3
-        self.ax4 = ax4
-        self.fig = fig
+        super(VsmAnimator, self).__init__(data_dir)
         self.fig = plt.figure(figsize=(12.11, 7.7))
-        ax1 = plt.subplot2grid((3, 9), (0, 0), colspan=3)
-        ax2 = plt.subplot2grid((3, 9), (1, 0), colspan=3)
-        ax3 = plt.subplot2grid((3, 9), (2, 0), colspan=3)
-        ax4 = plt.subplot2grid(
+        self.ax1 = plt.subplot2grid((3, 9), (0, 0), colspan=3)
+        self.ax2 = plt.subplot2grid((3, 9), (1, 0), colspan=3)
+        self.ax3 = plt.subplot2grid((3, 9), (2, 0), colspan=3)
+        self.ax4 = plt.subplot2grid(
             (3, 9), (0, 4), colspan=5, rowspan=3
         )
         self.metadata = dict(title='Vaccine Stock Management', artist='SDIV')
-        ax1.tick_params(labelbottom=False)
-        ax2.tick_params(labelbottom=False)
+        self.ax1.tick_params(labelbottom=False)
+        self.ax2.tick_params(labelbottom=False)
 
-        ax1.set_ylabel(r'$K_{stock}(t) \ $ (vaccine-jabs)')
-        ax2.set_ylabel(r'$a_t \ $ vaccine-jabs/day')
-        ax3.set_ylabel(r'$\pi ^{\star}$ current stock fraction')
+        self.ax1.set_ylabel(r'$K_{stock}(t) \ $ (vaccine-jabs)')
+        self.ax2.set_ylabel(r'$a_t \ $ vaccine-jabs/day')
+        self.ax3.set_ylabel(r'$\pi ^{\star}$ current stock fraction')
+        self.load_data()
         self.ax1.set_xlim(self.x_0_date, self.x_f_date)
         self.ax2.set_xlim(self.x_0_date, self.x_f_date)
         self.ax3.set_xlim(self.x_0_date, self.x_f_date)
         self.ax4.set_xlim(self.x_0_date, self.x_f_date)
 
-        ax3_labels = ax3.get_xticks()
-        ax3.set_xticks(ax3_labels)
-        ax3.set_xticklabels(
-            ax3.get_xticklabels(),
+        ax3_labels = self.ax3.get_xticks()
+        self.ax3.set_xticks(ax3_labels)
+        self.ax3.set_xticklabels(
+            self.ax3.get_xticklabels(),
             rotation=45, ha='right'
         )
-        ax3.set_xlabel(r'date')
-        ax4.set_ylabel(r'$I_S$ New confirmed cases')
-        ax4.set_xlabel(r'date')
-        ax4_labels = ax4.get_xticks()
-        ax4.set_xticks(ax4_labels)
-        ax4.set_xticklabels(
-            ax4.get_xticklabels(),
+        self.ax3.set_xlabel(r'date')
+        self.ax4.set_ylabel(r'$I_S$ New confirmed cases')
+        self.ax4.set_xlabel(r'date')
+        ax4_labels = self.ax4.get_xticks()
+        self.ax4.set_xticks(ax4_labels)
+        self.ax4.set_xticklabels(
+            self.ax4.get_xticklabels(),
             rotation=45, ha='right'
         )
 
@@ -283,10 +274,10 @@ class VsmAnimator(VsmFigures):
         self.ax3.set_ylabel(r'$y(t)$')
         self.ax3.set_xlabel(r'$x(t)$')
 
-        self.line1, = ax1.plot([], [], 'k-')
-        self.line2, = ax2.plot([], [], 'k-')
-        self.line3, = ax3.plot([], [], 'k-')
-        self.line4, = ax3.plot([], [], 'k-')
+        self.line1, = self.ax1.plot([], [], 'k-')
+        self.line2, = self.ax2.plot([], [], 'k-')
+        self.line3, = self.ax3.plot([], [], 'k-')
+        self.line4, = self.ax4.plot([], [], 'k-')
 
         self.filled_marker_style = dict(
             marker='o',
@@ -310,8 +301,6 @@ class VsmAnimator(VsmFigures):
             self.df_policy['K_stock'][0:idx]
         )
         self.ax1.set_ylabel(r'$K_{stock}$')
-        self.x_0_date = self.df_ref_sol.index.min()
-        self.x_f_date = self.df_ref_sol.index.max()
         self.ax1.set_xlim(self.x_0_date, self.x_f_date)
         self.ax1.set_ylim(0, self.y_k_t_lim)
 
@@ -359,16 +348,17 @@ class VsmAnimator(VsmFigures):
         )
         metadata = self.metadata
         writer = animation.FFMpegWriter(fps=5, metadata=metadata)
+        writergif = animation.PillowWriter(fps=24)
         # anim.save(video_file, writer=writer)
+        anim.save('animation.gif', writer=writergif)
         pbar = tqdm(
             desc='rec',
             total=3123750
         )
 
-
-        with writer.saving(self.fig, video_file, 100):
-            for idx, t in enumerate(self.df_policy.index):
-                # print(idx, t)
-                self.__call__(idx)
-                writer.grab_frame()
-                pbar.update(idx)
+        # with writer.saving(self.fig, video_file+'_', 100):
+        #     for idx, t in enumerate(self.df_policy.index):
+        #         # print(idx, t)
+        #         self.__call__(idx)
+        #         writer.grab_frame()
+        #         pbar.update(idx)
