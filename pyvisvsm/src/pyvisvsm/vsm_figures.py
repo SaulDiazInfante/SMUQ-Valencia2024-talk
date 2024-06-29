@@ -2,7 +2,8 @@ import seaborn as sns
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import matplotlib.animation as animation
+from tqdm import tqdm
 
 class VsmFigures(object):
     """_summary_
@@ -34,9 +35,18 @@ class VsmFigures(object):
             #   'K_stock',
             #   'action'
         ]
+        self.policy = [
+            'K_stock',
+            'action',
+            'opt_policy'
+        ]
+
         self.y_k_t_lim = 0.0
         self.y_a_t_lim = 0.0
         self.y_op_t_lim = 0.0
+        self.x_0_date = np.empty(1, dtype=object)
+        self.x_f_date = np.empty(1, dtype=object)
+        self.y_i_s_lim = 0.0
 
     def load_data(self):
         """_summary_
@@ -66,21 +76,19 @@ class VsmFigures(object):
             #   'K_stock',
             #   'action'
         ]
-        self.policy = [
-            'K_stock',
-            'action',
-            'opt_policy'
-        ]
+
         N = self.df_ref_par['N'][0]
-        self.df_states = N * self.df_ref_sol[self.states]
+        self.df_states = N * self.df_ref_sol.loc[:, self.states]
         self.df_policy = self.df_ref_sol[self.policy]
-        self.df_policy['K_stock'] = N * self.df_policy['K_stock']
-        self.df_policy['action'] = N * self.df_policy['action']
+        self.df_policy.loc[:, 'K_stock'] = N * self.df_policy.loc[:, 'K_stock']
+        self.df_policy.loc[:, 'action'] = N * self.df_policy.loc[:, 'action']
+        self.x_0_date = self.df_ref_sol.index.min()
+        self.x_f_date = self.df_ref_sol.index.max()
         self.y_k_t_lim = self.df_policy['K_stock'].max()
-        self.y_a_t_lim = self.df_policy['action'].max()
+        self.y_a_t_lim = 1.2 * self.df_policy['action'].max()
         self.y_op_t_lim = 1.2
-        
-        
+        self.y_i_s_lim = 1.1 * N * self.df_ref_sol['I_S'].max()
+
     def plot_states(self):
         """_summary_
 

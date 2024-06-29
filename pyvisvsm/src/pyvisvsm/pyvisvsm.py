@@ -1,4 +1,3 @@
-import sys
 import seaborn as sns
 import numpy as np
 import pandas as pd
@@ -81,10 +80,10 @@ class VsmFigures(object):
         ]
 
         N = self.df_ref_par['N'][0]
-        self.df_states = N * self.df_ref_sol[self.states]
+        self.df_states = N * self.df_ref_sol.loc[:, self.states]
         self.df_policy = self.df_ref_sol[self.policy]
-        self.df_policy['K_stock'] = N * self.df_policy['K_stock']
-        self.df_policy['action'] = N * self.df_policy['action']
+        self.df_policy.loc[:, 'K_stock'] = N * self.df_policy.loc[:, 'K_stock']
+        self.df_policy.loc[:, 'action'] = N * self.df_policy.loc[:, 'action']
         self.x_0_date = self.df_ref_sol.index.min()
         self.x_f_date = self.df_ref_sol.index.max()
         self.y_k_t_lim = self.df_policy['K_stock'].max()
@@ -216,15 +215,18 @@ class VsmAnimator(VsmFigures):
         data_dir="./data/"
     ):
         """_summary_
-
-        Args:
-            fig (matplotlib.pyplot.figure): _description_
-            ax1 (matplotlib.pyplot.axis): _description_
-            ax2 (matplotlib.pyplot.axis): _description_
-            ax3 (matplotlib.pyplot.axis): _description_
-            ax4 (matplotlib.pyplot.axis): _description_
-            data_dir (str, optional): _description_. Defaults to "./python-code/data/".
-
+        Parameters
+        ----------
+        data_dir : str
+            Path to data.
+        
+        Returns
+        -------
+        
+        Examples
+        --------
+        >>> 
+        vs = VsmAnimator()
         """
 
         super(VsmAnimator, self).__init__(data_dir)
@@ -257,6 +259,7 @@ class VsmAnimator(VsmFigures):
         self.ax3.set_xlabel(r'date')
         self.ax4.set_ylabel(r'$I_S$ New confirmed cases')
         self.ax4.set_xlabel(r'date')
+
         ax4_labels = self.ax4.get_xticks()
         self.ax4.set_xticks(ax4_labels)
         self.ax4.set_xticklabels(
@@ -273,6 +276,15 @@ class VsmAnimator(VsmFigures):
 
         self.ax3.set_ylabel(r'$y(t)$')
         self.ax3.set_xlabel(r'$x(t)$')
+
+        ax3_labels = self.ax3.get_xticks()
+        self.ax3.set_xticks(ax3_labels)
+        self.ax3.set_xticklabels(
+            self.ax3.get_xticklabels(),
+            rotation=45, ha='right'
+        )
+
+
 
         self.line1, = self.ax1.plot([], [], 'k-')
         self.line2, = self.ax2.plot([], [], 'k-')
@@ -300,31 +312,71 @@ class VsmAnimator(VsmFigures):
             self.df_policy.index[0:idx],
             self.df_policy['K_stock'][0:idx]
         )
-        self.ax1.set_ylabel(r'$K_{stock}$')
+        self.ax1.plot(
+            self.df_policy.index[idx],
+            self.df_policy['K_stock'].iloc[idx],
+            marker='o',
+            ms=5
+        )
+        # self.ax1.set_ylabel(r'$K_{stock}$')
         self.ax1.set_xlim(self.x_0_date, self.x_f_date)
         self.ax1.set_ylim(0, self.y_k_t_lim)
 
         self.ax2.clear()
         self.ax2.plot(
             self.df_policy.index[0:idx],
-            self.df_policy['action'][0:idx])
+            self.df_policy['action'].iloc[0:idx])
         self.ax2.set_xlim(self.x_0_date, self.x_f_date)
         self.ax2.set_ylim(0, self.y_a_t_lim)
+        self.ax2.plot(
+            self.df_policy.index[idx],
+            self.df_policy['action'].iloc[idx],
+            marker='o',
+            ms=5
+        )
 
         self.ax3.clear()
         self.ax3.plot(
             self.df_policy.index[0:idx],
-            self.df_policy['opt_policy'][0:idx])
+            self.df_policy['opt_policy'].iloc[0:idx]
+        )
         self.ax3.set_xlim(self.x_0_date, self.x_f_date)
         self.ax3.set_ylim(0, self.y_op_t_lim)
-        self.ax3.set_ylabel(r'$\pi$ faction of total stock')
+        self.ax3.plot(
+            self.df_policy.index[idx],
+            self.df_policy['opt_policy'].iloc[idx],
+            marker='o',
+            ms=5
+        )
+        ax3_labels = self.ax3.get_xticks()
+        self.ax3.set_xticks(ax3_labels)
+        self.ax3.set_xticklabels(
+            self.ax3.get_xticklabels(),
+            rotation=90, ha='right'
+        )
 
-        self.ax4.set_ylabel(r'$I_S$ New reported cases')
+        # self.ax3.set_ylabel(r'$\pi$ faction of total stock')
+
+        # self.ax4.set_ylabel(r'$I_S$ New reported cases')
+        self.ax4.clear()
+        self.ax4.set_xlim(self.x_0_date, self.x_f_date)
+        self.ax4.set_ylim(0, self.y_i_s_lim)
         self.ax4.plot(
             self.df_states.index[0:idx],
-            self.df_states['I_S'][0:idx]
+            self.df_states['I_S'].iloc[0:idx]
         )
-        self.ax4.set_ylim(0, self.y_i_s_lim)
+        self.ax4.plot(
+            self.df_states.index[idx],
+            self.df_states['I_S'].iloc[idx],
+            marker='o',
+            ms=5
+        )
+        ax4_labels = self.ax4.get_xticks()
+        self.ax4.set_xticks(ax4_labels)
+        self.ax4.set_xticklabels(
+            self.ax4.get_xticklabels(),
+            rotation=45, ha='right'
+        )
 
     def start(self) -> list:
         """_summary_
@@ -335,30 +387,38 @@ class VsmAnimator(VsmFigures):
         lines = [self.line1, self.line2, self.line3, self.line4]
         return lines
 
-    def record_animation(self, video_file='VSMAnimation.mp4'):
+    def record_animation(self, video_file='VSMAnimation'):
         """_summary_
         """
         anim = animation.FuncAnimation(
             self.fig,
             self,
             init_func=self.start,
-            frames=len(self.df_ref_sol.index),
             interval=1,
+            save_count=32,
+            frames=range(len(self.df_ref_sol.index)),
             repeat=False
         )
         metadata = self.metadata
-        writer = animation.FFMpegWriter(fps=5, metadata=metadata)
-        writergif = animation.PillowWriter(fps=24)
-        # anim.save(video_file, writer=writer)
-        anim.save('animation.gif', writer=writergif)
+        writer = animation.FFMpegWriter(fps=128, metadata=metadata)
+        writergif = animation.PillowWriter(fps=128)
+
+        str_tag = pd.Timestamp.now()
+        str_tag = str(str_tag)
+        str_tag.strip()
+        str_tag.replace(' ', '_')
+        str_tag = video_file+str_tag + ".mp4"
+        print(str_tag)
+        # anim.save(str_tag, writer=writer)
+        # anim.save('animation.gif', writer=writergif)
         pbar = tqdm(
             desc='rec',
-            total=3123750
+            total=len(self.df_ref_sol.index)
         )
 
-        # with writer.saving(self.fig, video_file+'_', 100):
-        #     for idx, t in enumerate(self.df_policy.index):
+        with writer.saving(self.fig, str_tag, 100):
+            for idx in range(len(self.df_ref_sol.index)):
         #         # print(idx, t)
-        #         self.__call__(idx)
-        #         writer.grab_frame()
-        #         pbar.update(idx)
+                self.__call__(idx)
+                writer.grab_frame()
+                pbar.update(idx)
