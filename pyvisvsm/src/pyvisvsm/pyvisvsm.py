@@ -6,7 +6,6 @@ import matplotlib.animation as animation
 from tqdm import tqdm
 
 
-
 class VsmFigures(object):
     """_summary_
     Class for reproduce figures: States, policies and dashboards.
@@ -212,6 +211,7 @@ class VsmAnimator(VsmFigures):
 
     def __init__(
         self,
+        fig,
         data_dir="./data/"
     ):
         """_summary_
@@ -228,8 +228,8 @@ class VsmAnimator(VsmFigures):
         >>> 
         vs = VsmAnimator()
         """
-
-        super(VsmAnimator, self).__init__(data_dir)
+        self.data_dir = data_dir
+        super().__init__(fig)
         self.fig = plt.figure(figsize=(12.11, 7.7))
         self.ax1 = plt.subplot2grid((3, 9), (0, 0), colspan=3)
         self.ax2 = plt.subplot2grid((3, 9), (1, 0), colspan=3)
@@ -244,6 +244,31 @@ class VsmAnimator(VsmFigures):
         self.ax1.set_ylabel(r'$K_{stock}(t) \ $ (vaccine-jabs)')
         self.ax2.set_ylabel(r'$a_t \ $ vaccine-jabs/day')
         self.ax3.set_ylabel(r'$\pi ^{\star}$ current stock fraction')
+
+        self.line1, = self.ax1.plot([], [], 'k-')
+        self.line2, = self.ax2.plot([], [], 'k-')
+        self.line3, = self.ax3.plot([], [], 'k-')
+        self.line4, = self.ax4.plot([], [], 'k-')
+
+        self.filled_marker_style = dict(
+            marker='o',
+            markersize=10,
+            color='darkgrey',
+            markerfacecolor='tab:blue',
+            markerfacecoloralt='lightsteelblue',
+            markeredgecolor='black',
+            fillstyle='left'
+        )
+
+    def set_up_axes(self, data_dir='/data'):
+        """_summary_
+
+        Args:
+            data_dir (str, optional): _description_. Defaults to '/data'.
+        """
+        self.data_dir = data_dir
+        self.df_ref_sol_path = data_dir + "df_solution.csv"
+        self.df_ref_par_path = data_dir + "parameters_model.json"
         self.load_data()
         self.ax1.set_xlim(self.x_0_date, self.x_f_date)
         self.ax2.set_xlim(self.x_0_date, self.x_f_date)
@@ -284,22 +309,6 @@ class VsmAnimator(VsmFigures):
             rotation=45, ha='right'
         )
 
-
-
-        self.line1, = self.ax1.plot([], [], 'k-')
-        self.line2, = self.ax2.plot([], [], 'k-')
-        self.line3, = self.ax3.plot([], [], 'k-')
-        self.line4, = self.ax4.plot([], [], 'k-')
-
-        self.filled_marker_style = dict(
-            marker='o',
-            markersize=10,
-            color='darkgrey',
-            markerfacecolor='tab:blue',
-            markerfacecoloralt='lightsteelblue',
-            markeredgecolor='black',
-            fillstyle='left'
-        )
 
     def __call__(self, idx):
         """_summary_
